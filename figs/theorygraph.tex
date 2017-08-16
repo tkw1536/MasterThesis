@@ -1,0 +1,106 @@
+% !TEX root = ../thesis.tex
+\begin{figure}[h]
+  \begin{center}
+    \begin{tikzpicture}[xscale=3.9,yscale=2.2]\footnotesize
+      \node[thy] (sg) at (1,-1) {
+        \begin{tabular}{l}
+          \textsf{Semigroup}\\\hline
+          $G,\circ$\\\hline
+          $\scriptstyle x\circ y\in G$ \\\hline
+          $\scriptstyle \plaintt{assoc}: (x\circ y)\circ z=x\circ (y\circ z)$
+        \end{tabular}
+      };
+      \node[thy] (m) at (1,0) {
+        \begin{tabular}{l}
+          \textsf{Monoid}\\\hline
+          $e$\\\hline
+          $\scriptstyle e\circ x=x$
+        \end{tabular}
+      };
+      \node[thy] (g) at (1,1) {
+        \begin{tabular}{l}
+          \textsf{Group}\\\hline
+          $i := \scriptstyle\lambda x.\tau y. x\circ y=e$\\\hline
+          $\scriptstyle\forall x:G.\exists y:G.x\circ y=e$
+        \end{tabular}
+      };
+      \node[thy] (cg) at (1,2.3) {
+        \begin{tabular}{l}
+          \textsf{Commutative Group}\\\hline
+          \\\hline
+          $\scriptstyle \plaintt{comm} : x\circ y=y\circ x$
+        \end{tabular}
+      };
+
+      \node[thy] (N) at (-1,-1) {
+        \begin{tabular}{l}
+          \textsf{Natural Numbers}\\\hline
+          $\mathbb{N},s,0$\\\hline
+          $\scriptstyle P1$,\ldots $\scriptstyle P5$
+        \end{tabular}
+      };
+      \node[thy] (Np) at (-1,0) {
+        \begin{tabular}{l}
+          \textsf{Natural Numbers with Plus}\\\hline
+          $+$\\\hline
+          $\scriptstyle n+0=n$,\\
+          $\scriptstyle n+s(m)=s(n+m)$
+        \end{tabular}
+      };
+      \node[thy] (Nt) at (-1,1) {
+        \begin{tabular}{l}
+          \textsf{Natural Numbers with Multiplication}\\\hline
+          $\cdot$\\\hline
+          $\scriptstyle n\cdot1=n$,\\
+          $\scriptstyle n\cdot s(m)=n\cdot m+n$
+        \end{tabular}
+      };
+      \node[thy] (ia) at (-1,2.3) {
+
+        \begin{tabular}{l}
+          \textsf{Integer Arithmetics}\\\hline
+          $-$\\
+          $\mathbb{Z} := \mathbb{N}\cup-\mathbb{N}$\\\hline
+          $\scriptstyle-0=0$
+        \end{tabular}
+      };
+
+      %Right side
+      \draw[include] (sg) -- (m);
+      \draw[include] (m) -- node[left] (mg) {$\mathsf{g}$} (g);
+      \draw[include] (g) -- (cg);
+
+      %Left side
+      \draw[include] (N) -- (Np);
+      \draw[include] (Np) -- (Nt);
+      
+      \draw[struct] (Nt) to[bend left=10] node[left] {$p$} (ia);
+      \draw[struct] (Nt) to[bend right=10] node[right] {$n$} (ia);  
+
+      %Links
+      \draw[view] (m) -- node[above] {$
+      \thmo{f}{
+      \left\{\begin{array}{l}
+        G\mapsto\mathbb{N}\\
+        \circ\mapsto +\\
+        e\mapsto 0
+      \end{array}\right\}
+      }$
+      } (Np);
+      \draw[view] (cg) -- node[above] {$\thmo{h}{
+      \left\{\begin{array}{l}
+        i\mapsto -\\
+        \mathsf{g}\mapsto\mathsf{f}
+      \end{array}\right\}
+      }$} (ia);
+    \end{tikzpicture}
+  \end{center}
+
+  \caption[A Simple Theory Graph]{
+  Simplified example of a theory graph. 
+  Imports and Structures are represented as solid edges and views as wavy edges. 
+  The mappings of the views are given explicitly. 
+  We omit the complete definitions of the Peano axioms for the natural numbers.
+  }
+  \label{fig:theorygraph}
+\end{figure}

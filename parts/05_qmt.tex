@@ -1,0 +1,245 @@
+% !TEX root = ../thesis.tex
+\section{The QMT Query Language}\label{sec:qmt}
+
+Now that we have seen how to represent and maintain knowledge in the MiTM ontology, we can turn towards aspect~\ref{intro:rq:ql} of the research question.  
+There is a multitude of problems where is is not enough to give the URI of a specific declaration and then retrieve this via \mmt. 
+There are several queries where one either does not know the exact URIs of all items to be retrieved, or where one wants to find all declarations subject to a specific criterion. 
+
+To allow for more flexibility and enable general ``information retrieval'' \mmt\ has a query language.
+This query language is called QMT -- Query language for Mathematical Theories.  
+QMT started as a query language for formal libraries \cite{Rabe:qlfml12}, but within the scope of this project it has been extended to better fit our needs.
+
+The query language enables the user to find a set of objects -- this can be \mmt\ objects (i.e. terms), declarations or even a set of theories and views -- subject to specific criteria.
+\begin{example}\label{example:simple}
+	One simple use case is to find all declarations inside of a given theory -- for example the query
+	\begin{lstlisting}[language=qmt]
+Related(
+	Literal(URI('odk:algebra?Semigroup')),
+	ToObject(Declares())
+)
+	\end{lstlisting}
+	when evaluated returns the three URIs to $G, \circ$ and \identifier{assoc} from Figure \ref{fig:theory}.
+\end{example}
+Understanding even this simple query is non-trivial. 
+We leave it to the below once we have gone over some parts of the query language to reiterate this example.
+
+\subsection{The Inductive Nature of the Query Language}\label{sec:qmt:inductive}
+
+The first important thing to note is that the query language is an inductive data structure.
+This decision was made for two reasons, (1) to enable typing of the language and (2) to allow easier implementation of evaluation.
+Type-checking of the language can prove very useful in practice, for instance to check if one has formulated a query correctly. 
+It is also used during evaluation -- but more on this later.
+
+Being inductive in nature, the query language contains certain basic queries, that take few to no parameters, and complex queries, that take queries themselves as parameters. 
+The query language is able to express information about different forms of content inside of \mmt. 
+It can return URIs, Objects and String literals -- we refer to these as \identifier{QueryBaseType}s.
+Example~\ref{example:simple} above is asking for a set of URIs -- namely all the URIs that are declared within the theory \uri{odk:algebra?Semigroup}.
+
+Different queries may return different types of results.
+Specifically, a query can return either a typed tuple of \identifier{QueryBaseType}s  or a homogeneous set of such tuples
+\footnote{In this setting ``typed tuple'' refers to the exact typing of each element in the tuple.
+For example, we consider a tuple of type \inlinecode{(URI, Object)} as typed but not one of type \inlinecode{(QueryBaseType, QueryBaseType)}. }.
+
+\begin{example}\label{example:divisible}
+	Another question one might ask is, ``what are the divisors of elliptic curves inside of \lmfdb\ that have a conductor divisible by 5''.
+	In fact, this question came up during the OpenDreamKit project when asking John Cremona about what queries the existing \lmfdb\ architecture could not handle\footnote{
+		It turns out that this query could actually be handled by existing architecture.
+		However, this was not an intended feature and a side-effect of an arbitrary code execution vulnerability on the side of the server.
+	}.
+\end{example}
+
+Such a query can be expressed inside the query language -- although it gets very complex very quickly -- thus we omit it here. 
+Unlike the previous example, this one returns a set of \mmt\ objects -- namely those representing divisors.
+
+The grammar of the query language consists of several parts: \identifier{Queries}, \identifier{Propositions}, \identifier{Relations}, \identifier{Predicates} and \identifier{Judgements}.
+An overview of each of these is given in the following, in particular detailing which queries these can be used to answer.
+
+Inside the query language, the \identifier{Query} class represents evaluable queries.
+The structure of queries is very much related to evaluation and intentionally kept restricted in certain situations.
+They can be roughly classified into three different types:
+\begin{enumerate}
+	\item Terminal Queries, which do not have sub-queries as parameters, 
+	\item Complex queries, formed by query operators which that take a sub-query as a parameter and upon evaluation evaluate the subquery and use the result thereof, and
+	\item Technical Queries, which have no direct influence on the result but only on how the query is evaluated
+\end{enumerate}
+
+The aim of this section is to give the reader an overall understanding of the query language, thus some cases are omitted. 
+The interested reader is referred to the \mmt\ website \cite{uniformal:on} and in particular the source code for a complete list. 
+Furthermore, the following talks about evaluating queries and at the same time treats them as functions that have a return value -- both of these refer to the same thing.
+
+\subsubsection*{Terminal Queries and Unary Predicates}\label{sec:qmt:terminal}
+
+The first type of terminal queries are those that return object literals -- appropriately called \inlinecode{Literal($\meta{obj}$)} and \inlinecode{Literals($\meta{objs}$)}.
+For example, a query \inlinecode{Literal(URI('odk:algebra?Semigroup'))} directly evaluates to the URI literal \inlinecode{URI('odk:algebra?Semigroup')}.
+
+Unary predicates effectively function as types of \mmt\ URIs -- they state which kind of objects the URIs refer to.
+For example, the unary predicate \inlinecode{IsTheory()} applies to URIs like \uri{odk:algebra?Semigroup} and \uri{odk:algebra?Algebra} -- all URIs that contain exactly one ``?'' and thus point to theories.
+Other important unary predicates include include \inlinecode{IsView()} and \inlinecode{IsConstant()}.
+
+Unary predicates form the basis of the second type of terminal queries -- the \inlinecode{Paths($\meta{un}$)} query.
+\begin{example}\label{example:paths}
+	The query \inlinecode{Paths(IsTheory())} returns the paths to all theories known to \mmt.
+\end{example}
+In general, path queries return the set of paths that are subject to the given unary predicate.
+
+As queries are inductive in nature, these two terminal queries form the basis of all queries.
+This choice was made intentionally -- it enables a functional implementation of the query language to be contained in a certain sense.
+A functional implementation has to evaluate each sub-query individually and at one point have each of the intermediate results in memory. 
+This choice makes sure that the sets each implementation has to work with are limited -- one never has to work with all paths in \mmt\ at once.
+
+\subsection{Query Results as Sets}\label{sec:qmt:results}
+
+The second type of queries are \textit{Complex Queries} made up of \textit{Query Operators}. 
+These take queries as parameters and return a new query.
+
+\begin{example}\label{example:unions}
+The query \begin{lstlisting}[language=qmt]
+Union(
+  Paths(IsTheory()), 
+  Paths(IsView())
+)
+  \end{lstlisting} returns the set of all paths that are either theories or views.
+\end{example}
+This example demonstrates an operator that treats query results as sets -- simply lifting the union operator to the query level.
+These types of queries do not depend on the semantics of content in \mmt.
+Apart from the \inlinecode{Union($\meta{left}$, $\meta{right}$)} operator, complex queries can also be formed by \inlinecode{Intersection($\meta{left}$, $\meta{right}$)} and \inlinecode{Difference($\meta{left}$, $\meta{right}$}.
+
+\subsubsection*{Making Use of Binary Predicates}\label{sec:qmt:binary}
+
+On top of unary predicates of \mmt\ paths there are also binary predicates.
+As binary predicates do these relate two \mmt\ URIs to each other -- for example the binary predicate \identifier{Declares} relates the subject \uri{odk:algebra?Semigroup} to the object \uri{odk:algebra?Semigroup?G}.
+Other binary predicates include \identifier{Declares}, \identifier{HasDomain}, \identifier{HasCodomain} and \identifier{Includes}.
+
+To be able to use these predicates inside of queries the \inlinecode{Related($\meta{to}$, $\meta{by}$)} operator exists.
+We have already seen an example for this, Example~\ref{example:simple} above was the first example introduced.
+This demonstrates the use of this operator -- the $\meta{to}$ parameter generates a set of URIs and is then filtered by everything related by a given relation $\meta{by}$.
+
+It should be noted that a single binary predicate can not directly function as a relation.
+To elaborate this further, consider a query that returns the single URI \uri{odk:algebra?Semigroup} and set it as the $\meta{to}$ parameter for a \inlinecode{Related} query.
+Looking into the \identifier{Declares} relation one has two choices -- find all URIs which are declared by this theory or find all URIs which declare this theory.
+\identifier{ToSubject} and \identifier{ToObject} can be used to clarify which one is requested. 
+
+\subsubsection*{Binding Variables in Queries}\label{sec:qmt:binding}
+
+Another type of query operators allows for binding of variables. 
+These created named references to intermediate results of the query and have undergone a refactoring and expansion during this project. 
+The most relevant query operator is the \inlinecode{Comprehension($\meta{domain}$, $\meta{varname}$, $\meta{pred}$)} -- which allows to filter a specific domain by those that fulfill a specific predicate.
+
+
+\begin{example}\label{example:filter}
+	The query \begin{lstlisting}[language=qmt]
+Comprehension(
+	Related(
+		URI('odk:algebra?Semigroup'), 
+		ToObject(Declares())
+	), 
+	LocalName('x'), 
+	Holds(
+		Bound(x), 
+		Typing('x', OMV(LocalName('x')), OMID(odk:algebra?Semigroup?G))
+	)
+)
+	\end{lstlisting}
+	finds all declarations within the \textit{Semigroup} theory that have a type 'G'.
+\end{example}
+
+We start on the left hand side by finding all URIs to declarations within the \textit{Semigroup} theory. 
+This is the same as in Example~\ref{example:simple}.
+Next, we use the comprehension operator to find all of those $x$s which are subject to a specific predicate.
+In general, \inlinecode{pred} parameter refers to a predicate, which in the codebase is represented by a class on its own.
+
+Here we specifically make use of the \inlinecode{Holds($\meta{about}$, $\meta{j}$)} predicate, which has been added to the grammar language to allow interaction with the object level of \mmt. 
+It can check if a so-called \identifier{Judgement} holds for the current variable ($x$).
+We declare a local variable within the query called $x$ inside the Comprehension operator. 
+We then refer to it within the predicate by using using \inlinecode{Bound(x)}.
+If we did not allow for binding of variables, we would only be able to declare predicates that are universally true or false -- resulting in the Comprehension operator becoming useless. 
+
+Other kinds of queries that allow binding include \begin{itemize}
+	\item the \inlinecode{Let($\meta{varname}$, $\meta{value}$, $\meta{in}$)}, which explicitly make a variable available,  
+	\item the \inlinecode{BigUnion($\meta{domain}$, $\meta{varname}$, $\meta{of}$)} operator, and
+  \item the \inlinecode{Map($\meta{varname}$, $\meta{in}$, $\meta{term}$)}, which constructs a new term for each element of the original query. 
+\end{itemize}
+The last \identifier{Map} query has been added during this thesis to make certain computational tasks easier to express. 
+
+Judgments, as given to the predicate by the $j$ parameter, are represented by the \identifier{QueryJudgment} class.
+This is a new addition to QMT. 
+It allows users to dynamically look into the \mmt\ types and structure of objects and check if they are subject to certain conditions. 
+In this specific example we use the \identifier{Typing} Judgment to check if a variable has a type $G$.
+
+\subsection{Evaluating Queries of MMT Content}\label{sec:qmt:eval}
+
+Next, the reader is provided with an overview of how queries are evaluated. 
+This exploits the typing of the query language, in particular return value of the query can be predicted without having to evaluate the query.
+
+Recall that \mmt\ queries can return either a typed tuple of \inlinecode{QueryBaseType}s or a list thereof.
+This allows to have a query always return a set of tuples of \inlinecode{QueryBaseType} internally. 
+A single tuple \inlinecode{QueryBaseType} can be represented by an appropriate singleton -- while separately maintaining the right typing for the results.
+
+We use the inductive nature of queries to guide us in the evaluation.
+Here a single query is considered as a (syntactic) tree, and the leaves are used start an inductive evaluation procedure. 
+During this procedure, a big initial result set is generated for the terminal queries, and then used inductively to make this set smaller.
+As mentioned above the terminal queries are intentionally limited -- to allow us to keep all of these intermediate results in memory.
+
+Recall that two important terminal queries are the \identifier{Literal} and \identifier{Paths} queries.
+The first query of these is trivial to evaluate -- simply place the literal inside of the query into the intermediate result set -- whereas the second one is a bit more tricky.
+
+\subsubsection*{Evaluation of Predicates and Relations}\label{sec:qmt:predeval}
+
+To evaluate a \identifier{Paths} query -- like the one in Example~\ref{example:paths} -- all URIs that are subject to a given unary predicate need to be found
+Assuming that all content is stored on disk, this can be solved in an elegant fashion.
+
+Whenever new content is added to \mmt, it is indexed and all information about which objects are of which type are added to an index. 
+This index comes in the form of a \identifier{RelationalStore}, which is managed by a \identifier{RelationalManager} (the naming will become more obvious later).
+At evaluation time, the implementation can easily look into this index and quickly retrieve all URIs of a specific type. 
+
+Next, the evaluation of query operators is explained. 
+Only two of four cases are non-trival. 
+
+In the case where these operators simply lift set operations to operations on queries, the evaluation is straightforward -- the set operations are just performed on the intermediate results.
+Now for the interesting cases, we have a look at the \inlinecode{Related($\meta{to}$, $\meta{by}$)} operator.
+It has to be aware of binary predicates.
+The implementation makes use of the same trick as above with the unary predicates -- whenever new content is added, all possible binary predicates are cached and store in an index. 
+This again happens inside of the \inlinecode{RelationalStore}. 
+Now the name makes sense as it stores relational information about a given set of knowledge items.
+During evaluation, the index can be used to quickly retrieve all items related to a given URI with a given predicate.
+
+Thus the query in Example~\ref{example:simple} is evaluated in two steps. 
+First, one evaluates the argument \inlinecode{Literal(URI('odk:algebra?Semigroup'))} -- it is a literal query so it just returns the argument. 
+Then one looks into the \inlinecode{RelationalStore} and finds all stored binary predicate triples, where the relation is \inlinecode{Declares} and the object is the URI \uri{odk:algebra?Semigroup}. 
+This will give exactly what we the query is looking for -- the URIs to constants declared by the \textit{Semigroup} theory from Figure~\ref{fig:theory}.
+
+\subsection{Evaluation of Predicates Involving Bound Variables}\label{sec:qmt:boundeval}
+
+Next, the evaluation of the \inlinecode{Comprehension($\meta{domain}$, $\meta{varname}$, $\meta{pred}$)} operator is described. 
+For this, recall Example~\ref{example:filter}. 
+Like with the other query operator the argument needs to be evaluated first. 
+This is the exact query given by Example~\ref{example:simple} and returns a set of URIs to concepts. 
+
+Next, an iteration is required. 
+For each element of this intermediate result set the other important argument to the query -- a predicate -- needs to be evaluated. 
+Specifically, it needs to be checked if the \begin{lstlisting}[language=qmt]
+Holds(
+	Bound(x), 
+	Typing('x', OMV(LocalName('x')), OMID(odk:algebra?Semigroup?G))
+)
+\end{lstlisting} predicate applies or not. 
+
+For this purpose a sub-query is spawned multiple times -- one for each of the elements inside the original set. 
+These sub-queries evaluate the predicate and need to know which element of the intermediate results the $x$ stands for. 
+Thus it needs to be given a context. 
+In this case, a context is simply a set of mappings for variables. 
+
+The QueryJudgement \begin{lstlisting}[language=qmt]
+Typing('x', OMV(LocalName('x')), OMID(odk:algebra?Semigroup?G))
+\end{lstlisting}
+needs to be evaluated. 
+Principally, this can be achieved by a part of \mmt\ called the Solver. 
+
+The actual evaluation is rather technical and first a so-called \identifier{Stack} for the Judgment is needed. 
+The Stack contains a set of rules that can be used to evaluate the judgment. 
+To hide the process of having to retrieve this Stack first from the User, the QueryJudgment class has been introduced. 
+This automatically retrieves all needed information at query evaluation time and passes on the information if the judgment holds or not from the Solver. 
+
+After the evaluation of sub-queries has been finished, is is easy to generate the result set. 
+Only the set of elements for which the predicate applies -- which are known at this point -- should be returned. 
+Other queries that bind variables make use of a similar procedure, with the exception that they do not check if a predicate applies, but instead evaluate different subquery results.

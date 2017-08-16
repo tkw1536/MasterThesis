@@ -1,0 +1,118 @@
+\begin{figure}
+  \begin{center}
+    \begingroup
+    \pgfdeclarelayer{background}
+    \pgfdeclarelayer{foreground}
+    \pgfsetlayers{background,foreground}
+    
+    \resizebox{\textwidth}{0.90\textwidth}{
+      \begin{tikzpicture}[xscale=3.0,yscale=2.0]
+        \begin{pgfonlayer}{foreground}
+          \tikzstyle{withshadow}=[draw,drop shadow={opacity=.5},fill=white]
+          \tikzstyle{database} = [cylinder,cylinder uses custom fill,
+            cylinder body fill=yellow!50,cylinder end fill=yellow!50,
+            shape border rotate=90,
+            aspect=0.25,draw]
+
+          \tikzstyle{human} = [red,dashed,thick]
+          \tikzstyle{machine} = [green,dashed,thick]
+          
+          % Foundations
+          \node[thy,dashed,align=center]  (compf) at (0,6.7) {Computational\\Foundations};
+          
+          \node[thy,dashed,align=center]  (pf) at (-.9,5.7) {Python\\Foundations};
+          \node[thy,align=center]  (mf) at (.16,5.3) {Mathematical\\Foundations};
+          \node[thy,dashed,align=center]  (cf) at (1,5.7) {C\textsuperscript{++}\\Foundations};
+
+          \node[thy,dashed,align=center]  (sf) at (-0.9,4.8) {SAGE};
+          \node[thy,dashed,align=center]  (gf) at (1,4.8) {GAP};
+
+          \draw[include] (compf) -- (pf);
+          \draw[includeleft] (compf) -- (cf);
+          \draw[include] (pf) -- (sf);
+          \draw[includeleft] (cf) -- (gf);
+          
+          % Model for Elliptic Curves
+          \node[thy] (kec) at (0,3) {EC};
+          \node[thy,minimum height=.4cm] (kl) at (0,4) {\ldots};
+          
+          % System-near models (Sage EC, GAP EC, LMFB EC)
+          \node[thy] (sec) at (-1,2.6) {Sage EC};
+          \node[thy,minimum height=.4cm] (sl) at (-1,3.5) {\ldots};
+
+          \node[thy] (gec) at (1,2.6) {GAP EC};
+          \node[thy,minimum height=.4cm] (gl) at (1,3.5) {\ldots};
+
+          \node[thy] (lec) at (-.2,1.2) {LMFDB EC};
+          \node[thy,minimum height=.4cm] (ll) at (0.7,1.2) {\ldots};
+          
+          % Sage System
+          \node (sc) at (-2.3,3.5) {SAGE};
+          \node[draw] (salg) at (-2.3,3.0) {Algorithms};
+          \node[database,dashed] (sdb) at (-2.3,2.5) {DB?};
+          \node[draw] (skr) at (-2.3,2.1) {Representation};
+          
+          % GAP System
+          \node (gc) at (2.3,3.5) {GAP};
+          \node[draw] (galg) at (2.3,3.0) {Algorithms};
+          \node[database,dashed] (gdb) at (2.3,2.5) {DB?};
+          \node[draw] (gkr) at (2.3,2.1) {Representation};
+          
+          % LMFDB System
+          \node (lmfdb) at (0,0) {LMFDB};
+          \node[database] (ldb) at (.6,-.4) {MongoDB};
+          \node[draw] (knowls) at (-.6,-.4) {Knowledge};
+          
+          % The clouds
+          \begin{pgfonlayer}{background}
+            \node[draw,cloud,fit=(sec) (sl),aspect=.4,inner sep=-3pt,withshadow,purple!30] (st) {};
+            \node[draw,cloud,fit=(gec) (gl),aspect=.4,inner sep=-4pt,withshadow,purple!30] (gt) {};
+            \node[draw,cloud,fit=(kec) (kl),aspect=.4,inner sep=0pt,withshadow,blue!30] (kt) {};
+            \node[draw,cloud,fit=(lec) (ll),aspect=2.5,inner sep=-7pt,withshadow,purple!30] (lt) {};
+          \end{pgfonlayer}
+          
+          % The system boxes
+          \begin{pgfonlayer}{background}
+            \node[draw=none,fill=green!30,rounded corners=1cm,fit=(mf) (compf) (pf) (cf) (sf) (gf),inner sep=1pt] {};
+            \node[draw,withshadow,fit=(sc) (skr) (sdb),inner sep=1pt] {};
+            \node[draw,withshadow,fit=(gc) (gkr) (gdb),inner sep=1pt] {};
+            \node[draw,withshadow,fit=(lmfdb) (ldb) (knowls),inner sep=1pt] {};
+          \end{pgfonlayer}
+          
+          % View, Includes metas
+          \draw[view] (kec) -- (sec);
+          \draw[view] (kec) -- (gec);
+          \draw[view] (kec) -- (lec);
+          \draw[include] (kec) -- (kl);
+          \draw[include] (gec) -- (gl);
+          \draw[include] (sec) -- (sl);
+          \draw[include] (lec) -- (ll);
+          \draw[view] (kl) -- (sl);
+          \draw[view] (kl) -- (gl);
+          \draw[view] (kl) to[bend left=5] (ll);
+
+          \draw[meta] (mf)  to [bend right=10] (st);
+          \draw[meta] (sf) -- (st);
+          \draw[meta] (mf)  to [bend left=10] (gt);
+          \draw[meta] (gf) -- (gt);
+          \draw[meta] (mf) -- (kt);
+          \draw[meta] (compf) to[bend right=15] (kt);
+
+          \draw[human,->] (skr) -- node[above]{\scriptsize edit} (st);
+          \draw[human,->] (gkr) -- node[above]{\scriptsize edit} (gt);
+          \draw[human,->] (knowls) -- node[left,near end]{\scriptsize edit} (lt);
+
+          \draw[human,->] (st) to[bend left=20] node[below]{\scriptsize refactor} (kt);
+          \draw[human,->] (gt) to[bend right=20] node[below]{\scriptsize refactor} (kt);
+          \draw[human,->] (lt) -- node[right]{\scriptsize refactor} (kt);
+        \end{pgfonlayer}
+      \end{tikzpicture}
+    }
+    \endgroup
+  \end{center}
+
+  \caption[An overview of the MiTM ontology]{
+    An overview of the MiTM ontology and how it interplays with the different systems. 
+  }
+  \label{fig:mitmontology}
+  \end{figure}

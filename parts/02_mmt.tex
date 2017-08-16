@@ -1,0 +1,164 @@
+% !TEX root = ../thesis.tex
+\section{Overview of the MMT System}\label{sec:mmt}
+
+\mmt\ \cite{Rabe:MMTLanguageSystem09} is a language and framework that was developed to manage (mainly) mathematical knowledge and can handle both formal and informal content.
+It is foundation independent, i.e. it does not enforce a certain logic for formal content.
+
+It consists of two main parts, the \omdocmmt\ language and the \mmt\ System.
+The \omdocmmt\ language \cite{rabe:mmt:09} forms the basis of knowledge representation.
+The \mmt\ System \cite{Rabe:MMT}, sometimes also referred to as the \mmt\ API, is the implementation of this language written in Scala.
+It can be extended by custom plugins.
+The project is under active development and the source code can be retrieved via \cite{uniformal:on}.
+
+\subsection{Theories as Sets of Declarations}\label{sec:mmt:theories}
+
+Knowledge in \omdocmmt\ is organized in theories which group knowledge together semantically.
+They consist of a set of declarations, each of which has a name as well as optionally a type, a definition and other kinds of meta data.
+A simple theory about Semigroups can be found in Figure~\ref{fig:theory}.
+
+\input{figs/theory.tex}
+
+We start by giving the theory a name -- Semigroup in this case -- and declaring the logical foundation we are using to formalize it -- in this case the LF Logical Framework \cite{Pfenning91}.
+The logical foundation used is called a meta-theory and is in itself an \omdocmmt\ theory\footnote{
+    In contrast to normal theories, meta-theories like LF within the \mmt\ system are commonly implemented in the form of code, rather than just taking the form of declarations.
+    This allows implementation of type checking as well as other \mmt\ features.
+}.
+
+In \mmt, each theory resides within a specific namespace -- which is not explicitly shown here.
+The namespace -- for example \url{http://www.opendreamkit.org/algebra} -- together with the theory name \inlinecode{Semigroup} forms the \mmt\ URI of the theory \url{http://www.opendreamkit.org/algebra?Semigroup}.
+This URI can be used to refer to the theory.
+
+To prevent having to write down long urls when they are used frequently \mmt\ supports the concept of URI abbreviations. 
+These function in a straightforward fashion. 
+For example, instead of constantly having to write \url{http://www.opendreamkit.org/} one define an abbreviation \uri{odk:} and then reduce URIs like \url{http://www.opendreamkit.org/algebra?Semigroup} to \uri{odk:algebra?Semigroup}. 
+
+\input{figs/abbrevs.tex}
+A list of common namespace abbreviations can be found in Table~\ref{fig:abbrevs}. 
+From this point forward, any URI makes use of these abbreviations. 
+
+We continue by making three declarations.
+These represent the requirements for semigroups: A set of elements, a (closed) operation on them and the axiom that the operation is associative.
+$G$, which is declared as a type, represents the set of elements.
+Declaring it as a type allows us to use it in the declarations below.
+
+Note that, like above, the name together with the URI for the theory provides a URI to the content being defined.
+Here this is \uri{odk:algebra?Semigroup?G}.
+\mmt\ URIs to declarations in general consist out of a triple $(d, m, s)$. 
+$d$ is a path to a namespace\footnote{
+  $d$ as in document.
+  These are essentially namespaces -- but like theories form groups of semantically related declarations so do documents form semantic groupings for theories.
+} (here \uri{odk:algebra}), 
+$m$ is the name of a theory\footnote{
+  The $m$ here stands for module -- a theory or a view.
+  We will define what a view is later on.
+} (here \inlinecode{Semigroup}) , 
+and $s$ is the name of a symbol (here $G$)
+
+Most of the time \mmt\ URIs are straightforward -- however in certain situations are not.
+Principally \mmt\ allows arbitrary nesting of theories -- that is theories within theories.
+
+Next, $\circ$ is declared and assigned the type $G \rightarrow G \rightarrow G$.
+Informally, this declares $\circ$ as a function taking two elements of $G$ and returning another element of $G$. 
+This makes it a closed operation on the semigroup elements.
+Finally, we declare the axiom of associativity called \inlinecode{assoc}.
+Here we make use of the \textit{ded} symbol via the Curry-Howard isomorphism\cite{Howard:tfnoc80}.
+Intuitively, the symbol returns the type of all proofs for the statement in question.
+Since we are declaring a constant of this type, this means that there is a proof for associativity -- making it an axiom.
+
+Types and definitions of objects make up the object layer.
+\mmt\ objects, also called terms, are essentially OpenMath \cite{BusCapCar:oms04} objects with some custom extensions.
+As such, they can consist of 
+\begin{itemize}
+    \item references to symbols (for example, we just use $\circ$ above, but a formal system needs to know what $\circ$ is), 
+    \item literals (mostly Integers like $1, 2, \dots$, but also strings), 
+    \item variables and constants, 
+    \item applications of terms to other terms ($G \rightarrow G$ is really the symbol $\rightarrow$ applied to two arguments $G$ and $G$), and
+    \item bindings of variables inside of terms (for example in terms like $\forall X. P(X)$, the variable $X$ is bound inside of the $\forall$ term). 
+\end{itemize}
+
+\mmt\ terms can be parsed both from an XML syntax as well as from a human-readable and writable surface syntax. 
+The surface syntax can be further defined by so-called notations. 
+These are additional meta-data on declarations that specify how a specific symbol or application of a symbol should look like. 
+
+\subsection{Structure of Theory Graphs}\label{sec:mmt:tg}
+
+Theories can be related via three different relations, imports, structures, and views.
+Imports make knowledge, i.e. all declarations, from one theory available in another and are used to extend theories.
+Views are truth-preserving mappings from declarations in one theory to another.
+Structures are very similar to views, except that they allow for renaming of declarations. 
+Together Theories, Imports and Views naturally form a graph-like structure call a Theory Graph.
+An example of a theory graph -- extending the example above -- can be found in Figure~\ref{fig:theorygraph}.
+
+\input{figs/theorygraph.tex}
+
+We start on the bottom right by declaring a semigroup as above.
+Due to complexity of the theory graph, we use more simplified notation and omit some details like meta-theories.
+In Mathematics, a Monoid can be defined as a semigroup together with an identity element.
+This is exactly what happens here as well, using an Import to from the semigroup theory into the Monoid theory and then adding declarations for the identity element $e$.
+We continue with this principle, first we extend the Monoid into a Group by adding an identity element $i$ together with an appropriate axiom and finally we extend this into a commutative group (top right) by adding an axiom of commutativity.
+
+We also make use of the other relation between theories, a so-called view.
+This is done on the left hand side of the figure.
+Here we start on the bottom by defining the natural numbers, as formalized by the Peano Axiomes\footnote{
+For simplicity, we omit their exact description here.
+They are merely referred to as $p_1, p_2, p_3, p_4, p_5$. }.
+The next important step is the addition of a plus operation, again through the principle of importing the existing theory and adding another declaration.
+
+Any skilled mathematician will have noticed that Natural Numbers together with addition are an example of a Monoid, in other words one can ``view'' the natural numbers as a Monoid.
+To express this formally, one has to be a bit more explicit.
+The set of elements $G$ correspond to the natural numbers $\mathbb{N}$, the operation $\circ$ corresponds to $+$ and the identity element $e$ is given by $0$.
+This mapping is given by the view $g$ and is truth-preserving in a certain sense: Everything that is true based on the axioms inside the $Monoid$ theory still holds in our Natural Numbers example -- after translation via the view of course.
+
+On the top left hand corner we make use of this mechanism even more. 
+We would first like to make use of the Imports mechanism to create a theory of ``Integer Arithmetics''. 
+But there is a problem: We need the natural numbers twice, one for positive numbers, once for negative numbers. 
+To achieve this, we make use of structures, called $p$ and $n$ here. 
+$p$ imports the natural numbers as positive integers, and $n$ imports them again as negative numbers. 
+We then need to add the axiom that the zeros from both imports are actually the same. 
+
+Furthermore, we use the view $h$ to show that this is an example of a ``Commutative Group''. 
+The first line of the mapping is not too interesting -- we just state the inverse is given by the negation of an integer -- but something special happens in the second line.
+Note how we have not yet given mappings for a lot of the elements, for example groups still require a base set $G$ which is formally known because of the Import.
+Instead of giving this mapping again, we instead take the import of the group theory $g$ and map it via an existing view $f$.
+Similar to how theories are modularized via Imports, this allows us to structure views in a similar fashion. 
+
+\subsection{Accessing Content in MMT by URI}\label{sec:name}
+
+The primary method for accessing knowledge in \mmt\ is by name.
+Recall that all content, including theories, views and declarations have been assigned a URI.
+These URIs function like a name -- each of them identifies a piece of content inside of \mmt.
+
+Consider for example, an author wishing to retrieve the associativity axiom for the \textit{Semigroup} theory we defined in Example~\ref{fig:theorygraph}.
+Assuming that the author is familiar with our naming scheme, they can identify the URI \uri{odk:algebra?Semigroup?assoc}.
+They can then directly access this URI in \mmt.
+
+Another example of accessing a knowledge item comes from the OpenDreamKit project.
+During the course of the project, we have in particular made several curves stored within the \lmfdb\ database available to \mmt.
+Consider the elliptic curves dataset.
+Within \mmt, this has been given the URI \uri{lmfdb:db/elliptic_curve}.
+Each curve has a label assigned to by \lmfdb\ itself, for example \inlinecode{11a1}.
+Should a user want to retrieve information about this specific curve, they can us the URI \uri{lmfdb:db/elliptic_curve?11a1}.
+
+\subsection{Using URIs for Knowledge Representation}\label{sec:name:knowledge}
+
+Consider the \inlinecode{Monoid} theory from Figure~\ref{fig:theorygraph}.
+Imagine we want to retrieve the associativity axiom for Monoids -- can we just ask for the URI \uri{odk:algebra?Monoid?assoc}?
+The immediate answer is no -- there is no such declaration as it is only available via the \textit{Import}.
+Thus the retrieval should fail.
+
+In this example, one can easily retrieve the \uri{odk:algebra?Semigroup?assoc} instead.
+We are familiar with the theory graph structure and can just follow the import.
+In other situations, the theory graph structure might not be as well-known by the person wanting to retrieve a declaration -- or it might not be obvious.
+This is the case for the \textit{Integer Arithmetics} theory -- here we are ``importing'' the same theory twice via two different structures.
+Even if we want to look for the associativity axiom in this theory and made \textit{Imported declarations} available it would not be clear how to make a difference between the two different associativity axioms.
+
+\input{figs/theoryflat.tex}
+
+This is where the concept of flattening steps in.
+Flattening formalizes what we have only explained in a hand-wavy fashion so far -- taking an imported (or structurally made available) theory and replacing it with explicit declarations.
+The process of flattening is sometimes also referred to as elaboration and an example can be found in Figure~\ref{fig:flattheory}.
+We can see that this theory no longer has an import of the \textit{Semigroup} theory -- instead we have the declarations $G, \circ$ and \textit{assoc}.
+Such theories are never written explicitly but instead are built by the \mmt\ system internally -- thus allowing us to retrieve \uri{odk:algebra?Monoid?assoc} after all.
+
+In summary, URIs are very useful -- both in flattened and non-flattened form -- when it comes to knowledge representation.
+This is only the case if one knows the structure of the knowledge one is talking about, as they enable us retrieve a specific knowledge item.

@@ -1,0 +1,34 @@
+% !TEX root = ../thesis.tex
+\begin{figure}[h!]
+  \begin{center}
+    \begin{tikzpicture}\footnotesize
+      \node[thy] (codecs) at (0,0) {
+        \begin{tabularx}{\textwidth}{lll|X}
+          \multicolumn{4}{l}{\textsf{Codecs}} \\\hline\hline   
+          \identifier{codec}    & : & \multicolumn{1}{l}{$\typett\rightarrow\typett$} & \\\hline
+          \identifier{StandardPos}    & : & $\codectt\ \mathbb{Z}^{+}$   & \multirow{3}{*}{\begin{minipage}{3.8in}
+                                                                                        JSON number if small enough,
+                                                                                        else JSON string of decimal expansion
+                                                                                        \end{minipage}}\\
+          \identifier{StandardNat}    & : & $\codectt\ \mathbb{N}$       & \\
+          \identifier{StandardInt}    & : & $\codectt\ \mathbb{Z}$       & \\\hline
+          \identifier{IntAsArray}     & : & $\codectt\ \mathbb{Z}$       & JSON List of Numbers\\
+          \identifier{IntAsString}    & : & $\codectt\ \mathbb{Z}$       & JSON String of decimal expansion\\\hline
+          \identifier{StandardBool}   & : & $\codectt\ \mathbb{B}$       & JSON Booleans \\
+          \identifier{BoolAsInt}      & : & $\codectt\ \mathbb{B}$       & JSON Numbers $0$ or $1$ \\\hline
+          \identifier{StandardString} & : & $\codectt\ \mathbb{S}$       & JSON Strings \\
+        \end{tabularx}
+      };
+    \end{tikzpicture}
+  \end{center}
+
+  \caption[List of Codecs]{
+    An annotated subset of the \uri{ODK:?Codecs} theory containing a selection of codecs found in \mmt. 
+    Here $\mathbb{N}$ represents natural numbers (including $0$), 
+    $\mathbb{Z}$ integers, 
+    $\mathbb{Z}^{+}$ positive integers, 
+    $\mathbb{B}$ booleans and
+    $\mathbb{S}$ (unicode character) strings. 
+  }
+  \label{fig:codecs}
+\end{figure}

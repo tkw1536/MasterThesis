@@ -1,0 +1,59 @@
+% Template for Jacobs Master Thesis Title Page
+\makeatletter
+\begin{titlepage}
+  \thispagestyle{empty}
+  
+  \providecommand{\HRule}{\vspace{-0.3cm}\rule{.45\linewidth}{0.5mm}}
+  \providecommand{\printreviewer}[1]{
+    \HRule\\
+    \vspace*{-0.4em}
+    {\small{#1}}\\[1ex]
+  }
+  
+  
+  % The university logo
+  \vspace*{-3cm}
+  \hfill \includegraphics[width=0.5\textwidth]{imgs/jacobs} \\[1cm]
+  \vspace*{7mm}  
+  
+  % Title and Things
+  \begin{center}
+    \LARGE {
+      \textbf{\@title}\\
+      \bigskip
+      by\\
+      \bigskip
+      \textbf{\@author\space}
+    }
+  \end{center}
+  
+  
+  \vspace*{2.1cm}
+  {
+    \hspace*{-0.6cm}
+    \centerline{
+      \large{a thesis for conferral of a Master of Science in Data Engineering}
+    }
+  }
+
+  \vfill
+  
+  % List of reviewers
+  \Large{
+    \begin{flushright}
+      \printreviewer{Prof. Dr. Michael Kohlhase}
+      \printreviewer{Dr. Florian Rabe}
+    \end{flushright}
+  }
+  
+  \vspace{1.5cm}
+  
+  % Date of Submission
+  \begin{flushleft}
+    \small{Date Of Submission: {\makeatletter\@date\makeatother}}\\
+    \vspace{-0.4cm}
+    ~\hrule
+  \end{flushleft}
+  
+\end{titlepage}
+\newpage

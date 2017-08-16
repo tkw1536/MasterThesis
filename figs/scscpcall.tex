@@ -1,0 +1,47 @@
+% !TEX root = ../thesis.tex
+\begin{figure}[h]
+  \begin{center}
+    \begin{lstlisting}[language=XML]
+<OMOBJ>
+  <OMATTR>
+    
+    <!-- First a set of options for the function call -->
+    <OMATP>
+      
+      <!-- some per-session unique idenfier -->
+      <OMS cd="scscp1" name="call_id" />
+      <OMSTR>fa99c557370a87b83a4ac16e10c43940</OMSTR>
+      
+      <!-- Tell the server that it should return the result of the computation as an object -->
+      <OMS cd="scscp1" name="option_return_object" />
+      <OMSTR></OMSTR>
+    </OMATP>
+
+    <OMA>
+      
+      <!-- indicate that a procedure call is being made -->
+      <OMS cd="scscp1" name="procedure_call" />
+      
+      <OMA>
+        
+        <!-- the procedure to call --> 
+        <OMS cd="scscp_transient_1" name="Addition"/>
+        
+        <!-- and the arguments to give to it -->
+        <OMI>1</OMI>
+        <OMI>1</OMI>
+      </OMA>
+    </OMA>
+  </OMATTR>
+</OMOBJ>
+\end{lstlisting}
+  \end{center}
+  
+  \vspace*{-1.5em}
+  
+
+  \caption[SCSCP Client Example]{
+    An (annotated) OpenMath representation of an SCSCP function call to compute and return the result of $1 + 1$. 
+  }
+  \label{fig:scscpcall}
+\end{figure}
